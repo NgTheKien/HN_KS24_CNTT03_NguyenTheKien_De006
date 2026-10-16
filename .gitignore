@@ -1,0 +1,9 @@
+.env
+.gradle/
+build/
+target/
+out/
+.idea/
+*.iml
+.vscode/
+.DS_Store
