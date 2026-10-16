@@ -1,9 +1,22 @@
-.env
-.gradle/
+# Build output (Gradle)
 build/
-target/
+.gradle/
 out/
+*.jar
+!gradle/wrapper/gradle-wrapper.jar
+
+# IDE
 .idea/
-*.iml
 .vscode/
+*.iml
+
+# OS / log
 .DS_Store
+Thumbs.db
+*.log
+
+# Khóa SSH - TUYỆT ĐỐI không commit
+*.pem
+id_*
+deploy_key
+deploy_key.pub
