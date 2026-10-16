@@ -1,15 +1,6 @@
-# =============================================================================
-#  docker-compose.yml - FILE KHUNG
-#  - Service "mysql", networks, volumes: ĐÃ CẤU HÌNH SẴN, không cần sửa.
-#  - Hệ thống chỉ gồm backend Spring Boot (trả JSON), Nginx làm reverse proxy, MySQL.
-#  - Mạng: proxy-net (nginx <-> app), db-net (app <-> mysql); MySQL KHÔNG publish cổng.
-#  - Sinh viên điền các ô ______ tại các dòng TODO trong service "app" và "nginx".
-#  - Chạy:  docker compose --env-file student.env up -d --build
-# =============================================================================
 name: ${COMPOSE_PROJECT_NAME:?Chua dien COMPOSE_PROJECT_NAME trong student.env}
 
 services:
-  # ---------------------------------------------------------------- MySQL (CÓ SẴN)
   mysql:
     image: mysql:8.0
     restart: unless-stopped
@@ -32,41 +23,34 @@ services:
     networks:
       - db-net
 
-  # ---------------------------------------------------------------- Spring Boot
   app:
     build:
-      context: ./${APP_DIR:-backend}
+      context: .
       args:
-        JAVA_VERSION: ${JAVA_VERSION:-21}
-        GRADLE_VERSION: ${GRADLE_VERSION:-8.14.3}
-    image: ${APP_IMAGE:-app-backend:local}
-    container_name: app-backend
-    restart: always
-    ports:
-      - "127.0.0.1:8080:8080"
+        APP_VERSION: ${APP_VERSION:-local}
+    image: ${APP_IMAGE:-devops-final-app}:${APP_TAG:-latest}
+    restart: unless-stopped
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/${DB_NAME}?useSSL=false&allowPublicKeyRetrieval=true
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
-      DB_URL: jdbc:mysql://db:3306/${DB_NAME}?useSSL=false&allowPublicKeyRetrieval=true
-      DB_USERNAME: root
-      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: mysql
+      DB_PORT: "3306"
+      DB_NAME: ${MYSQL_DATABASE}
+      DB_USER: ${MYSQL_USER}
+      DB_PASSWORD: ${MYSQL_PASSWORD}
+      TZ: Asia/Ho_Chi_Minh
     depends_on:
-      db:
+      mysql:
         condition: service_healthy
     networks:
-      - app-net
+      - db-net
+      - proxy-net
 
-  # ---------------------------------------------------------------- Nginx (reverse proxy)
   nginx:
     image: nginx:1.27-alpine
     restart: unless-stopped
-    # TODO 4: publish cổng cá nhân APP_PORT (trong student.env) ra cổng 80 của container
     ports:
-      - "127.0.0.1:8080:8080"
-    # TODO 5: mount (read-only)  nginx/default.conf -> /etc/nginx/conf.d/default.conf
+      - "${APP_PORT}:80"
     volumes:
-      - /etc/nginx/conf.d/default.conf
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
       - app
     networks:
